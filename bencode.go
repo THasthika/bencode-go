@@ -1,4 +1,4 @@
-package torrentclient
+package bencode
 
 import (
 	"bufio"
