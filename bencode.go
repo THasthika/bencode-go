@@ -3,6 +3,7 @@ package bencode
 import (
 	"bufio"
 	"errors"
+	"fmt"
 	"log"
 	"regexp"
 	"strconv"
@@ -27,8 +28,14 @@ type BInteger int
 // BList is a list of BNodes
 type BList []*BNode
 
+// BDictNode is a node in BDict
+type BDictNode struct {
+	Key   string
+	Value *BNode
+}
+
 // BDict is a dictionary of BNodes
-type BDict map[string]*BNode
+type BDict []*BDictNode
 
 // BencodeType type
 type BencodeType uint
@@ -41,17 +48,6 @@ const (
 	BencodeList      BencodeType = 3
 	BencodeDict      BencodeType = 4
 )
-
-// // NewBencode creates a new bencode reader
-// func NewBencode(r io.Reader) *BencodeReader {
-// 	b := &BencodeReader{
-// 		reader: r,
-// 	}
-
-// 	return b
-// }
-
-// func (b *BencodeReader)
 
 // BencodeRead ok
 func BencodeRead(r *bufio.Reader) (*BNode, error) {
@@ -137,13 +133,74 @@ func (b *BNode) Print() {
 		if !ok {
 			log.Panicln("could not case node")
 		}
-		for k, v := range *d {
-			log.Println(k)
-			if v.Type == BencodeList || v.Type == BencodeDict {
-				v.Print()
+		for _, v := range *d {
+			log.Println(v.Key)
+			if v.Value.Type == BencodeDict {
+				v.Value.Print()
 			}
 		}
 	}
+}
+
+// GetBencode returns the bencoded string
+func (b *BNode) GetBencode() (string, error) {
+	switch b.Type {
+	case BencodeString:
+		s, err := b.GetString()
+		if err != nil {
+			return "", err
+		}
+		return fmt.Sprintf("%d:%s", len(s), s), nil
+	case BencodeInteger:
+		i, err := b.GetInteger()
+		if err != nil {
+			return "", err
+		}
+		return fmt.Sprintf("i%de", i), nil
+	case BencodeList:
+		l, err := b.GetList()
+		if err != nil {
+			return "", err
+		}
+		s := "l"
+		for _, v := range l {
+			x, err := v.GetBencode()
+			if err != nil {
+				return "", err
+			}
+			s += x
+		}
+		s += "e"
+		return s, err
+	case BencodeDict:
+		d, err := b.GetDict()
+		if err != nil {
+			return "", err
+		}
+		s := "d"
+		for _, v := range d {
+			s += fmt.Sprintf("%d:%s", len(v.Key), v.Key)
+			x, err := v.Value.GetBencode()
+			if err != nil {
+				return "", err
+			}
+			s += x
+		}
+		s += "e"
+		return s, err
+	default:
+		return "", errors.New("type undefined")
+	}
+}
+
+// Get returns the node in the dict with the key
+func (d *BDict) Get(key string) *BNode {
+	for _, v := range *d {
+		if v.Key == key {
+			return v.Value
+		}
+	}
+	return nil
 }
 
 func parseString(r *bufio.Reader) (*BString, error) {
@@ -213,7 +270,7 @@ func parseDict(r *bufio.Reader) (*BDict, error) {
 	if err != nil {
 		return nil, err
 	}
-	dict := make(BDict)
+	dict := make(BDict, 0)
 	for {
 		p, err := r.Peek(1)
 		if err != nil {
@@ -234,7 +291,11 @@ func parseDict(r *bufio.Reader) (*BDict, error) {
 		if err != nil {
 			return nil, err
 		}
-		dict[string(*key)] = val
+		n := &BDictNode{
+			Key:   string(*key),
+			Value: val,
+		}
+		dict = append(dict, n)
 	}
 }
 
