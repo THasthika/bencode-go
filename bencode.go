@@ -199,6 +199,65 @@ func (d *BDict) Get(key string) *BNode {
 	return nil
 }
 
+// BEncode returns BNode of a native go structure
+func BEncode(val interface{}) (*BNode, error) {
+	s, ok := val.(string)
+	if ok {
+		bs := BString(s)
+		n := &BNode{
+			Type: BencodeString,
+			Node: &bs,
+		}
+		return n, nil
+	}
+	i, ok := val.(int)
+	if ok {
+		bi := BInteger(i)
+		n := &BNode{
+			Type: BencodeInteger,
+			Node: &bi,
+		}
+		return n, nil
+	}
+	l, ok := val.([]interface{})
+	if ok {
+		bl := make(BList, 0)
+		for _, v := range l {
+			in, err := BEncode(v)
+			if err != nil {
+				return nil, err
+			}
+			bl = append(bl, in)
+		}
+		n := &BNode{
+			Type: BencodeList,
+			Node: &bl,
+		}
+		return n, nil
+	}
+	d, ok := val.(map[string]interface{})
+	if ok {
+		bd := make(BDict, 0)
+		for k, v := range d {
+			in, err := BEncode(v)
+			if err != nil {
+				return nil, err
+			}
+			dn := BDictNode{
+				Key:   k,
+				Value: in,
+			}
+			bd = append(bd, &dn)
+		}
+		n := &BNode{
+			Type: BencodeDict,
+			Node: &bd,
+		}
+		return n, nil
+	}
+	return nil, errors.New("unsupported type")
+}
+
 func parseString(r *bufio.Reader) (*BString, error) {
 	lstr, err := r.ReadString(byte(':'))
 	if err != nil {

@@ -112,3 +112,15 @@ func Test_Bencodeding(t *testing.T) {
 	log.Println(ret.GetBencode())
 
 }
+
+func Test_Encoding(t *testing.T) {
+	n, err := BEncode(map[string]interface{}{
+		"hello": 12,
+		"info":  []interface{}{123, 142321},
+	})
+	if err != nil {
+		t.Error(err)
+	}
+
+	log.Println(n.GetBencode())
+}
