@@ -9,13 +9,9 @@ import (
 	"strconv"
 )
 
-// Bencode structure
-type Bencode struct {
-}
-
 // BNode can be a string, integer, list or a dictionary
 type BNode struct {
-	Type BencodeType
+	Type BType
 	Node interface{}
 }
 
@@ -37,20 +33,20 @@ type BDictNode struct {
 // BDict is a dictionary of BNodes
 type BDict []*BDictNode
 
-// BencodeType type
-type BencodeType uint
+// BType bencode type
+type BType uint
 
 // BencodeType Constants
 const (
-	BencodeUndefined BencodeType = 0
-	BencodeString    BencodeType = 1
-	BencodeInteger   BencodeType = 2
-	BencodeList      BencodeType = 3
-	BencodeDict      BencodeType = 4
+	BencodeUndefined BType = 0
+	BencodeString    BType = 1
+	BencodeInteger   BType = 2
+	BencodeList      BType = 3
+	BencodeDict      BType = 4
 )
 
-// BencodeRead ok
-func BencodeRead(r *bufio.Reader) (*BNode, error) {
+// BRead read from the input buffer and return a bencode node
+func BRead(r *bufio.Reader) (*BNode, error) {
 	return parse(r)
 }
 
@@ -102,7 +98,7 @@ func (b *BNode) GetDict() (BDict, error) {
 	return *d, nil
 }
 
-// Print func
+// Print print the bnode to the logger
 func (b *BNode) Print() {
 	switch b.Type {
 	case BencodeString:
@@ -374,7 +370,7 @@ func readUntilMax(r *bufio.Reader, c int, buffer []byte) error {
 	}
 }
 
-func getType(r *bufio.Reader) (BencodeType, error) {
+func getType(r *bufio.Reader) (BType, error) {
 	b, err := r.Peek(1)
 	if err != nil {
 		return BencodeUndefined, err

@@ -12,18 +12,32 @@ import (
 )
 
 func Test_Main(t *testing.T) {
-	reader, err := os.Open("./test2.torrent")
+	reader, err := os.Open("./test1.torrent")
 
 	if err != nil {
 		t.Error(err)
 	}
 
 	// // ret, err := BencodeRead(bufio.NewReader(strings.NewReader("li324ei12412e5:hello8:tharindue")))
-	// ret, err := BencodeRead(bufio.NewReader(reader))
+	ret, err := BRead(bufio.NewReader(reader))
 
-	// if err != nil {
-	// 	t.Error(err)
-	// }
+	if err != nil {
+		t.Error(err)
+	}
+
+	dict, err := ret.GetDict()
+	if err != nil {
+		t.Error(err)
+	}
+
+	bcode, err := dict.Get("info").GetBencode()
+
+	h := sha1.New()
+	io.WriteString(h, bcode)
+
+	infoHash := fmt.Sprintf("%x", h.Sum(nil))
+
+	log.Println(infoHash)
 
 	// dict, err := ret.GetDict()
 
@@ -48,7 +62,7 @@ func Test_Tracker(t *testing.T) {
 	}
 
 	// ret, err := BencodeRead(bufio.NewReader(strings.NewReader("li324ei12412e5:hello8:tharindue")))
-	ret, err := BencodeRead(bufio.NewReader(reader))
+	ret, err := BRead(bufio.NewReader(reader))
 
 	if err != nil {
 		t.Error(err)
@@ -82,14 +96,14 @@ func Test_Tracker(t *testing.T) {
 
 	io.WriteString(h, s)
 
-	fmt.Printf("%x\n", h.Sum(nil))
+	log.Printf("%x\n", h.Sum(nil))
 
 	reader.Close()
 }
 
 func Test_Bencodeding(t *testing.T) {
 
-	ret, err := BencodeRead(bufio.NewReader(strings.NewReader("d5:hello5:hello5:helloi124124ee")))
+	ret, err := BRead(bufio.NewReader(strings.NewReader("d5:hello5:hello5:helloi124124ee")))
 
 	if err != nil {
 		t.Error(err)
