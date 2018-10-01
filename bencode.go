@@ -363,7 +363,7 @@ func parseDict(r *bufio.Reader) (*BDict, error) {
 			return nil, err
 		}
 		n := &BDictNode{
-			Key:   string(*key),
+			Key:   key.ToString(),
 			Value: val,
 		}
 		dict = append(dict, n)
