@@ -199,6 +199,22 @@ func (d *BDict) Get(key string) *BNode {
 	return nil
 }
 
+// ToString returns the native string type
+func (s *BString) ToString() string {
+	if s == nil {
+		return ""
+	}
+	return string(*s)
+}
+
+// ToInt returns the native int type
+func (i *BInteger) ToInt() int {
+	if i == nil {
+		return 0
+	}
+	return int(*i)
+}
+
 // BEncode returns BNode of a native go structure
 func BEncode(val interface{}) (*BNode, error) {
 	s, ok := val.(string)
